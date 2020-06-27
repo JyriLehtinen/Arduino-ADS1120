@@ -1,11 +1,12 @@
 {
   "name": "ADS1120",
-  "version": "1.0.0",
-  "repository":
-  {
+  "keywords": "SPI, ADC, sensor",
+  "description": "Arduino Library for ADC ADS1120.",
+  "repository": {
     "type": "git",
     "url": "https://github.com/LucasEtchezuri/Arduino-ADS1120.git"
   },
-  "keywords": "SPI, ADC, sensor",
-  "description": "Arduino Library for ADC ADS1120"
+  "version": "1.0.0", 
+  "frameworks": "arduino",
+  "platforms": "*"
 }
