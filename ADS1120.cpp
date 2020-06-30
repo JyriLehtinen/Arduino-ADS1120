@@ -1,3 +1,4 @@
+#include "Arduino.h"
 #include "ADS1120.h"
 #include "SPI.h"
 
@@ -9,11 +10,9 @@ void ADS1120::writeRegister(uint8_t address, uint8_t value)
 {
   digitalWrite(ADS1120_CS_PIN, LOW);
   delay(5);
-  SPI.transfer(CMD_WREG | (address << 2)); // What not setting num bytes?
+  SPI.transfer(CMD_WREG | (address << 2));
   SPI.transfer(value);
   delay(5);
-  //startSync(); // Send start/sync for continuous conversion mode
-  //delayMicroseconds(1); // Delay a minimum of td(SCCS)
   digitalWrite(ADS1120_CS_PIN, HIGH);
 }
 
@@ -21,36 +20,36 @@ uint8_t ADS1120::readRegister(uint8_t address)
 {
   digitalWrite(ADS1120_CS_PIN, LOW);
   delay(5);
-  SPI.transfer(CMD_RREG | (address << 2)); // What not setting num bytes?
+  SPI.transfer(CMD_RREG | (address << 2));
   uint8_t data = SPI.transfer(SPI_MASTER_DUMMY);
   delay(5);
   digitalWrite(ADS1120_CS_PIN, HIGH);
   return data;
 }
 
-void ADS1120::begin(uint8_t cs_pin, uint8_t drdy_pin)
+void ADS1120::begin(uint8_t clk_pin, uint8_t miso_pin, uint8_t mosi_pin, uint8_t cs_pin, uint8_t drdy_pin)
 {
   // Set pins up
   ADS1120_CS_PIN = cs_pin;
   ADS1120_DRDY_PIN = drdy_pin;
+  ADS1120_CLK_PIN = clk_pin;
+  ADS1120_MISO_PIN = miso_pin;
+  ADS1120_MOSI_PIN = mosi_pin;
 
   // Configure the SPI interface (CPOL=0, CPHA=1)
-  SPI.begin();
+  SPI.begin(ADS1120_CLK_PIN, ADS1120_MISO_PIN, ADS1120_MOSI_PIN);
   SPI.setDataMode(SPI_MODE1);
-
+  
   // Configure chip select as an output
   pinMode(ADS1120_CS_PIN, OUTPUT);
-
-  // Configure DRDY as as input (mfg wants us to use interrupts)
+  // Configure DRDY as as input
   pinMode(ADS1120_DRDY_PIN, INPUT);
 
   digitalWrite(ADS1120_CS_PIN, LOW); // Set CS Low
-  delayMicroseconds(1);              // Wait a minimum of td(CSSC)
-  reset();                           // Send reset command
+  delayMicroseconds(1);              
+  reset();                           
   delayMicroseconds(1);
   ; // Delay a minimum of 50 us + 32 * tclk
-
-  // Sanity check read back (optional)
 
   startSync();                        // Send start/sync for continuous conversion mode
   delayMicroseconds(1);               // Delay a minimum of td(SCCS)
@@ -69,7 +68,7 @@ bool ADS1120::isDataReady()
 int ADS1120::readADC()
 {
   digitalWrite(ADS1120_CS_PIN, LOW); // Take CS low
-  delayMicroseconds(1); // Minimum of td(CSSC)
+  delayMicroseconds(1);              // Minimum of td(CSSC)
   int adcVal = SPI.transfer(SPI_MASTER_DUMMY);
   adcVal = (adcVal << 8) | SPI.transfer(SPI_MASTER_DUMMY);
   delayMicroseconds(1); // Minimum of td(CSSC)
@@ -100,10 +99,8 @@ int ADS1120::readADC_Single()
   SPI.transfer(0x08);
   while (digitalRead(ADS1120_DRDY_PIN) == HIGH)
   {
-    //Wait to DRDY goes down
-    //Not a good thing
-    //Code could be stuck here
-    //Need a improve later
+    // Espera a que DRDY se ponga en nivel bajo. Esto es un riesgo porque pude quedar bloqueado el codigo aca.
+    // Se deberia poner un timeout configurable en el metodo de begin y devolver un error si no responde 
   }
 
   int adcVal = SPI.transfer(SPI_MASTER_DUMMY);
@@ -121,10 +118,8 @@ byte *ADS1120::readADC_SingleArray()
   SPI.transfer(0x08);
   while (digitalRead(ADS1120_DRDY_PIN) == HIGH)
   {
-    //Wait to DRDY goes down
-    //Not a good thing
-    //Code could be stuck here
-    //Need a improve later
+    // Espera a que DRDY se ponga en nivel bajo. Esto es un riesgo porque pude quedar bloqueado el codigo aca.
+    // Se deberia poner un timeout configurable en el metodo de begin y devolver un error si no responde
   }
 
   static byte dataarray[2];
@@ -139,7 +134,6 @@ byte *ADS1120::readADC_SingleArray()
 
 void ADS1120::sendCommand(uint8_t command)
 {
-  // Following Protocentral's code, not sure exactly what's going on here.
   digitalWrite(ADS1120_CS_PIN, LOW);
   delay(2);
   digitalWrite(ADS1120_CS_PIN, HIGH);
@@ -153,21 +147,20 @@ void ADS1120::sendCommand(uint8_t command)
 
 void ADS1120::writeRegisterMasked(uint8_t value, uint8_t mask, uint8_t address)
 {
-  // Write the value to a register using the mask to leave the rest of the
-  // register untouched. This does not shift the value, so it shoudl be provided
-  // shifted to the appropriate positions.
-
-  // Read what's in the register now
+  // Escribe un valor en el registro, aplicando la mascara para tocar unicamente los bits necesarios.
+  // No realiza el corrimiento de bits (shift), hay que pasarle ya el valor corrido a la posicion correcta
+  
+  // Leo el contenido actual del registro
   uint8_t register_contents = readRegister(address);
 
-  // Flip the mask so that it's zeros where we'll put data and zero out that
-  // part of the register's contents
+  // Cambio bit aa bit la mascara (queda 1 en los bits que no hay que tocar y 0 en los bits a modificar)
+  // Se realiza un AND co el contenido actual del registro.  Quedan "0" en la parte a modificar
   register_contents = register_contents & ~mask;
 
-  // OR in the value to be written
+  // se realiza un OR con el valor a cargar en el registro.  Ojo, valor debe estar en el posicion (shitf) correcta
   register_contents = register_contents | value;
 
-  // Write it back out
+  // Escribo nuevamente el registro
   writeRegister(address, register_contents);
 }
 
@@ -426,7 +419,7 @@ void ADS1120::setIDAC2routing(uint8_t value)
 void ADS1120::setDRDYmode(uint8_t value)
 {
   /* Controls the behavior of the DOUT/DRDY pin when new data are ready.
-     0 - Only the dedicated DRDY pin is used
+     0 - Only the dedicated DRDY pin is used  (Default)
      1 - Data ready indicated on DOUT/DRDY and DRDY
  */
   // Make sure the value is in the valid range. Otherwise set to 0x00

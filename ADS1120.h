@@ -48,9 +48,13 @@ class ADS1120 {
     ADS1120();
     uint8_t ADS1120_CS_PIN;
     uint8_t ADS1120_DRDY_PIN;
+    uint8_t ADS1120_CLK_PIN;
+    uint8_t ADS1120_MISO_PIN;
+    uint8_t ADS1120_MOSI_PIN;
+
     void writeRegister(uint8_t address, uint8_t value);
     uint8_t readRegister(uint8_t address);
-    void begin(uint8_t cs_pin, uint8_t drdy_pin);
+    void begin(uint8_t clk_pin, uint8_t miso_pin, uint8_t mosi_pin, uint8_t cs_pin, uint8_t drdy_pin);
     bool isDataReady(void);
     int readADC(void);
     byte * readADC_Array(void);
