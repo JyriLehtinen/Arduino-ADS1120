@@ -8,5 +8,5 @@
   },
   "version": "1.0.1", 
   "frameworks": "arduino",
-  "platforms": ["Atmel AVR", "espressif8266", "espressif32"]
+  "platforms": ["atmelavr", "espressif8266", "espressif32"]
 }
