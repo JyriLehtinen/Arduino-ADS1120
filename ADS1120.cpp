@@ -9,20 +9,20 @@ ADS1120::ADS1120()
 void ADS1120::writeRegister(uint8_t address, uint8_t value)
 {
   digitalWrite(ADS1120_CS_PIN, LOW);
-  delay(5);
+  //delay(5);
   SPI.transfer(CMD_WREG | (address << 2));
   SPI.transfer(value);
-  delay(5);
+  //delay(5);
   digitalWrite(ADS1120_CS_PIN, HIGH);
 }
 
 uint8_t ADS1120::readRegister(uint8_t address)
 {
   digitalWrite(ADS1120_CS_PIN, LOW);
-  delay(5);
+  //delay(5);
   SPI.transfer(CMD_RREG | (address << 2));
   uint8_t data = SPI.transfer(SPI_MASTER_DUMMY);
-  delay(5);
+  //delay(5);
   digitalWrite(ADS1120_CS_PIN, HIGH);
   return data;
 }
@@ -135,13 +135,13 @@ byte *ADS1120::readADC_SingleArray()
 void ADS1120::sendCommand(uint8_t command)
 {
   digitalWrite(ADS1120_CS_PIN, LOW);
-  delay(2);
+  //delay(2);
   digitalWrite(ADS1120_CS_PIN, HIGH);
-  delay(2);
+  //delay(2);
   digitalWrite(ADS1120_CS_PIN, LOW);
-  delay(2);
+  //delay(2);
   SPI.transfer(command);
-  delay(2);
+  //delay(2);
   digitalWrite(ADS1120_CS_PIN, HIGH);
 }
 
