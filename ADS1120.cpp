@@ -2,14 +2,18 @@
 #include "ADS1120.h"
 #include "SPI.h"
 
+SPISettings _settings(1000000, MSBFIRST, SPI_MODE1);
+
 ADS1120::ADS1120()
 {
 }
 
 void ADS1120::writeRegister(uint8_t address, uint8_t value)
 {
+  SPI.beginTransaction(_settings);
   digitalWrite(ADS1120_CS_PIN, LOW);
   //delay(5);
+
   SPI.transfer(CMD_WREG | (address << 2));
   SPI.transfer(value);
   //delay(5);
@@ -18,6 +22,7 @@ void ADS1120::writeRegister(uint8_t address, uint8_t value)
 
 uint8_t ADS1120::readRegister(uint8_t address)
 {
+  SPI.beginTransaction(_settings);
   digitalWrite(ADS1120_CS_PIN, LOW);
   //delay(5);
   SPI.transfer(CMD_RREG | (address << 2));
@@ -67,6 +72,7 @@ bool ADS1120::isDataReady()
 
 int ADS1120::readADC()
 {
+  SPI.beginTransaction(_settings);
   digitalWrite(ADS1120_CS_PIN, LOW); // Take CS low
   delayMicroseconds(1);              // Minimum of td(CSSC)
   int adcVal = SPI.transfer(SPI_MASTER_DUMMY);
@@ -78,6 +84,7 @@ int ADS1120::readADC()
 
 byte *ADS1120::readADC_Array()
 {
+  SPI.beginTransaction(_settings);
   digitalWrite(ADS1120_CS_PIN, LOW); // Take CS low
   delayMicroseconds(1);              // Minimum of td(CSSC)
   static byte dataarray[2];
@@ -93,6 +100,7 @@ byte *ADS1120::readADC_Array()
 //Single Conversion read modes
 int ADS1120::readADC_Single()
 {
+  SPI.beginTransaction(_settings);
   digitalWrite(ADS1120_CS_PIN, LOW); // Take CS low
   delayMicroseconds(1);              // Minimum of td(CSSC)
 
@@ -103,6 +111,7 @@ int ADS1120::readADC_Single()
     // Se deberia poner un timeout configurable en el metodo de begin y devolver un error si no responde 
   }
 
+  SPI.beginTransaction(_settings);
   int adcVal = SPI.transfer(SPI_MASTER_DUMMY);
   adcVal = (adcVal << 8) | SPI.transfer(SPI_MASTER_DUMMY);
   delayMicroseconds(1); // Minimum of td(CSSC)
@@ -112,6 +121,7 @@ int ADS1120::readADC_Single()
 
 byte *ADS1120::readADC_SingleArray()
 {
+  SPI.beginTransaction(_settings);
   digitalWrite(ADS1120_CS_PIN, LOW); // Take CS low
   delayMicroseconds(1);              // Minimum of td(CSSC)
 
@@ -134,6 +144,7 @@ byte *ADS1120::readADC_SingleArray()
 
 void ADS1120::sendCommand(uint8_t command)
 {
+  SPI.beginTransaction(_settings);
   digitalWrite(ADS1120_CS_PIN, LOW);
   //delay(2);
   digitalWrite(ADS1120_CS_PIN, HIGH);
