@@ -18,6 +18,7 @@ void ADS1120::writeRegister(uint8_t address, uint8_t value)
   SPI.transfer(value);
   //delay(5);
   digitalWrite(ADS1120_CS_PIN, HIGH);
+  SPI.endTransaction();
 }
 
 uint8_t ADS1120::readRegister(uint8_t address)
@@ -29,6 +30,7 @@ uint8_t ADS1120::readRegister(uint8_t address)
   uint8_t data = SPI.transfer(SPI_MASTER_DUMMY);
   //delay(5);
   digitalWrite(ADS1120_CS_PIN, HIGH);
+  SPI.endTransaction();
   return data;
 }
 
@@ -79,6 +81,7 @@ int ADS1120::readADC()
   adcVal = (adcVal << 8) | SPI.transfer(SPI_MASTER_DUMMY);
   delayMicroseconds(1); // Minimum of td(CSSC)
   digitalWrite(ADS1120_CS_PIN, HIGH);
+  SPI.endTransaction();
   return adcVal;
 }
 
@@ -94,6 +97,7 @@ byte *ADS1120::readADC_Array()
   }
   delayMicroseconds(1); // Minimum of td(CSSC)
   digitalWrite(ADS1120_CS_PIN, HIGH);
+  SPI.endTransaction();
   return dataarray;
 }
 
@@ -105,6 +109,7 @@ int ADS1120::readADC_Single()
   delayMicroseconds(1);              // Minimum of td(CSSC)
 
   SPI.transfer(0x08);
+  SPI.endTransaction();
   while (digitalRead(ADS1120_DRDY_PIN) == HIGH)
   {
     // Espera a que DRDY se ponga en nivel bajo. Esto es un riesgo porque pude quedar bloqueado el codigo aca.
@@ -116,6 +121,7 @@ int ADS1120::readADC_Single()
   adcVal = (adcVal << 8) | SPI.transfer(SPI_MASTER_DUMMY);
   delayMicroseconds(1); // Minimum of td(CSSC)
   digitalWrite(ADS1120_CS_PIN, HIGH);
+  SPI.endTransaction();
   return adcVal;
 }
 
@@ -139,11 +145,13 @@ byte *ADS1120::readADC_SingleArray()
   }
   delayMicroseconds(1); // Minimum of td(CSSC)
   digitalWrite(ADS1120_CS_PIN, HIGH);
+  SPI.endTransaction();
   return dataarray;
 }
 
 void ADS1120::sendCommand(uint8_t command)
 {
+
   SPI.beginTransaction(_settings);
   digitalWrite(ADS1120_CS_PIN, LOW);
   //delay(2);
@@ -154,6 +162,7 @@ void ADS1120::sendCommand(uint8_t command)
   SPI.transfer(command);
   //delay(2);
   digitalWrite(ADS1120_CS_PIN, HIGH);
+  SPI.endTransaction();
 }
 
 void ADS1120::writeRegisterMasked(uint8_t value, uint8_t mask, uint8_t address)
